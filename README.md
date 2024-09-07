@@ -23,4 +23,3 @@ sql dump file:
 - > mysql -u <user_name> -p accounts < db_backup.sql
 
 
-# install java 11 jdk en amazon linux
