@@ -9,6 +9,8 @@ pipeline {
         registryCredential = 'ecr:us-east-1:awscreds'
         appRegistry = "891377115407.dkr.ecr.us-east-1.amazonaws.com/vprofileappimg"
         vprofileRegistry = "https://891377115407.dkr.ecr.us-east-1.amazonaws.com"
+        cluster = "vprofile-sovero"
+        service = "vprofileappsvc"
     }
   stages {
     stage('Fetch code'){
@@ -63,25 +65,25 @@ pipeline {
             }
         }
 
-        stage('Build App Image') {
-            steps {
-                script {
-                    dockerImage = sh(script: "sudo docker build -t ${appRegistry}:${BUILD_NUMBER} ./Docker-files/app/multistage/", returnStdout: true).trim()
-                }
-            }
-    }
-
-
-    // stage('Build App Image') {
-    //    steps {
-       
-    //      script {
-    //             dockerImage = docker.build( appRegistry + ":$BUILD_NUMBER", "./Docker-files/app/multistage/")
-    //          }
-
-    //  }
-    
+    //     stage('Build App Image') {
+    //         steps {
+    //             script {
+    //                 dockerImage = sh(script: "sudo docker build -t ${appRegistry}:${BUILD_NUMBER} ./Docker-files/app/multistage/", returnStdout: true).trim()
+    //             }
+    //         }
     // }
+
+
+    stage('Build App Image') {
+       steps {
+       
+         script {
+                dockerImage = docker.build( appRegistry + ":$BUILD_NUMBER", "./Docker-files/app/multistage/")
+             }
+
+     }
+    
+    }
 
     stage('Upload App Image') {
           steps{
@@ -93,6 +95,14 @@ pipeline {
             }
           }
      }
+
+    stage('Deploy to ecs') {
+          steps {
+        withAWS(credentials: 'awscreds', region: 'us-east-1') {
+          sh 'aws ecs update-service --cluster ${cluster} --service ${service} --force-new-deployment'
+        }
+      }
+    }
 
   }
 }
